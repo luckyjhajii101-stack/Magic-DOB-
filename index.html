@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Magic & Lucky Number Game</title>
+    <!-- कॉन्फेटी इफ़ेक्ट लाइब्रेरी -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        h1, h2 {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            color: #ffecd2;
+            text-shadow: 0 0 10px rgba(255, 236, 210, 0.5);
+        }
+
+        p {
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            color: #e0e0e0;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #ffb199;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            padding-right: 40px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            text-align: center;
+        }
+
+        /* हिडन डेट पिकर के आइकॉन का स्टाइल */
+        .native-datepicker {
+            position: absolute;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .calendar-icon {
+            position: absolute;
+            right: 12px;
+            pointer-events: none;
+            font-size: 1.2rem;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+            transition: 0.3s ease;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 65, 108, 0.6);
+        }
+
+        .game-btn {
+            background: linear-gradient(45deg, #8a2be2, #4a00e0);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .whatsapp-btn {
+            background: linear-gradient(45deg, #25d366, #128c7e);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+            margin-top: 15px;
+        }
+
+        #result-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            animation: fadeIn 0.8s ease-in-out;
+            text-align: left;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #result-title {
+            font-size: 1.1rem;
+            color: #ffeb3b;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        #result-desc {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #f1f1f1;
+            margin-bottom: 12px;
+        }
+
+        .extra-info {
+            font-size: 0.9rem;
+            color: #c7d2fe;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        /* ---------------- गेम सेक्शन स्टाइल्स ---------------- */
+        .card-flip-container {
+            perspective: 1000px;
+            margin: 20px auto;
+            width: 140px;
+            height: 180px;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: #f1c40f;
+            font-size: 3rem;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #f1c40f, #e67e22);
+            color: #fff;
+            transform: rotateY(180deg);
+        }
+
+        .card-back .number {
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .card-back .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #game-prediction {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #ffeaa7;
+            min-height: 48px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- बर्थडे मैजिक कार्ड -->
+        <div class="card">
+            <h1>✨ Birthday Magic Vibe ✨</h1>
+            <p>अपनी जन्म तिथि दर्ज करें या कैलेंडर से चुनें!</p>
+
+            <div class="input-group">
+                <label for="dob-text">Enter your DOB (Type or Pick):</label>
+                <div class="input-wrapper">
+                    <input type="text" id="dob-text" placeholder="DD/MM/YYYY या YYYY-MM-DD">
+                    <span class="calendar-icon">📅</span>
+                    <input type="date" id="dob-picker" class="native-datepicker">
+                </div>
+            </div>
+
+            <button class="btn" onclick="revealMagic()">मैजिक देखें 🪄</button>
+
+            <div id="result-box">
+                <h3 id="result-title"></h3>
+                <p id="result-desc"></p>
+                <div id="extra-details" class="extra-info"></div>
+                <button class="btn whatsapp-btn" onclick="shareOnWhatsApp()">WhatsApp पर शेयर करें 📲</button>
+            </div>
+        </div>
+
+        <!-- लकी नंबर प्रेडिक्टर गेम -->
+        <div class="card">
+            <h2>🔮 Magic Lucky Number Game</h2>
+            <p>अपने मन में 1 से 9 के बीच कोई एक संख्या सोचें, फिर कार्ड पर टैप करके अपना जादुई भाग्य जानें!</p>
+
+            <div class="card-flip-container" onclick="playLuckyGame()">
+                <div class="card-inner" id="magic-card">
+                    <div class="card-front">❓</div>
+                    <div class="card-back">
+                        <div class="number" id="lucky-num-display">7</div>
+                        <div class="label">Lucky Number</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-prediction">कार्ड पर क्लिक करके गेम शुरू करें!</div>
+            <button class="btn game-btn" onclick="playLuckyGame()">फिर से कार्ड फ्लिप करें 🎲</button>
+        </div>
+
+    </div>
+
+    <script>
+        // कैलेंडर पिकर और टेक्स्ट इनपुट को सिंक करना
+        const dobText = document.getElementById('dob-text');
+        const dobPicker = document.getElementById('dob-picker');
+
+        // आज के बाद की तारीख ब्लॉक करें
+        dobPicker.max = new Date().toISOString().split("T")[0];
+
+        dobPicker.addEventListener('change', (e) => {
+            if (e.target.value) {
+                const [y, m, d] = e.target.value.split('-');
+                dobText.value = `${d}/${m}/${y}`;
+            }
+        });
+
+        const magicMeanings = [
+            {
+                title: "🌟 जन्मजात लीडर और विजनरी",
+                desc: "आपकी पर्सनैलिटी में एक अलग ही सम्मोहन है। आप जीवन में हर परिस्थिति को संभालना जानते हैं और आपके विचार दूसरों को एक नई राह दिखाते हैं।"
+            },
+            {
+                title: "💖 बेहद दयालु और प्यार करने वाले",
+                desc: "आपका दिल सोने जैसा साफ है। आप अपनों की खुशियों के लिए हमेशा खड़े रहते हैं और आपकी मौजूदगी ही दूसरों के चेहरों पर मुस्कान ले आती है।"
+            },
+            {
+                title: "🚀 निडर और सपने देखने वाले मुसाफिर",
+                desc: "आपकी सोच आसमान छूने की है। रुकावटें आपको रोक नहीं पातीं, बल्कि आप हर चुनौती को सीढ़ी बनाकर अपनी सफलता की इबारत लिखते हैं।"
+            },
+            {
+                title: "🎨 एक सच्ची कलात्मक आत्मा (Creative Soul)",
+                desc: "आपकी रचनात्मकता (Creativity) और सोचने का अंदाज बिल्कुल अलग है। आप छोटी-छोटी चीजों में भी खूबसूरती ढूंढ लेते हैं और दुनिया को रंगीन बनाते हैं।"
+            },
+            {
+                title: "🍀 भाग्यशाली और सकारात्मक ऊर्जा के स्रोत",
+                desc: "आप जहाँ भी जाते हैं, वहाँ पॉजिटिविटी फैल जाती है। कठिन समय में भी उम्मीद का दामन न छोड़ना आपकी सबसे बड़ी ताकत है।"
+            },
+            {
+                title: "🧠 बुद्धिमान और गहरे विचारक",
+                desc: "आपकी सूझबूझ और समझदारी लोगों को प्रभावित करती है। आप किसी भी फैसले को बहुत गहराई से सोचते हैं और हमेशा सही रास्ता चुनते हैं।"
+            }
+        ];
+
+        const luckyGameData = {
+            1: "सूर्य की ऊर्जा: आज आपकी नेतृत्व क्षमता चरम पर रहेगी!",
+            2: "चंद्रमा का प्रभाव: आपकी रचनात्मकता और शांति आपको सफलता दिलाएगी।",
+            3: "गुरु की कृपा: आज नया ज्ञान और बुद्धिमत्ता हासिल करने का सही दिन है।",
+            4: "राहु की राह: आज आपको कोई अप्रत्याशित शुभ समाचार मिल सकता है!",
+            5: "बुध का प्रभाव: आपकी संवाद शैली और बुद्धि से लोग प्रभावित होंगे।",
+            6: "शुक्र का जादू: आकर्षण, लग्जरी और खुशियां आपका इंतजार कर रही हैं।",
+            7: "केतु का रहस्य: आपकी अंतरात्मा और अंतर्ज्ञान आज बिल्कुल सही फैसले लेगा।",
+            8: "शनि का संतुलन: आपकी कड़ी मेहनत का बड़ा फल मिलने का समय आ गया है।",
+            9: "मंगल का साहस: आपकी ऊर्जा और आत्मविश्वास से हर बाधा दूर होगी।"
+        };
+
+        // तारीख पार्सिंग यूटिलिटी (विभिन्न फ़ॉर्मेट्स हैंडल करने के लिए)
+        function parseDOB(rawInput) {
+            if (!rawInput) return null;
+
+            let day, month, year;
+
+            // अगर YYYY-MM-DD फ़ॉर्मेट हो
+            if (rawInput.includes('-')) {
+                const parts = rawInput.split('-');
+                if (parts[0].length === 4) {
+                    [year, month, day] = parts.map(Number);
+                } else {
+                    [day, month, year] = parts.map(Number);
+                }
+            } 
+            // अगर DD/MM/YYYY फ़ॉर्मेट हो
+            else if (rawInput.includes('/')) {
+                const parts = rawInput.split('/');
+                if (parts[2] && parts[2].length === 4) {
+                    [day, month, year] = parts.map(Number);
+                } else if (parts[0].length === 4) {
+                    [year, month, day] = parts.map(Number);
+                }
+            }
+
+            if (day && month && year && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                return { day, month, year };
+            }
+            return null;
+        }
+
+        function getZodiac(day, month) {
+            const zodiacs = [
+                { name: "मकर (Capricorn)", color: "काला (Black)", number: 8, limit: 19 },
+                { name: "कुंभ (Aquarius)", color: "नीला (Blue)", number: 4, limit: 18 },
+                { name: "मीन (Pisces)", color: "समुद्री हरा (Sea Green)", number: 7, limit: 20 },
+                { name: "मेष (Aries)", color: "लाल (Red)", number: 9, limit: 19 },
+                { name: "वृषभ (Taurus)", color: "गुलाबी (Pink)", number: 6, limit: 20 },
+                { name: "मिथुन (Gemini)", color: "पीला (Yellow)", number: 5, limit: 20 },
+                { name: "कर्क (Cancer)", color: "चांदी जैसा (Silver)", number: 2, limit: 22 },
+                { name: "सिंह (Leo)", color: "सुनहरा (Gold)", number: 1, limit: 22 },
+                { name: "कन्या (Virgo)", color: "हरा (Green)", number: 5, limit: 22 },
+                { name: "तुला (Libra)", color: "आसमानी नीला (Blue)", number: 6, limit: 22 },
+                { name: "वृश्चिक (Scorpio)", color: "मरून (Maroon)", number: 9, limit: 21 },
+                { name: "धनु (Sagittarius)", color: "बैंगनी (Purple)", number: 3, limit: 21 }
+            ];
+            let index = month - 1;
+            if (day > zodiacs[index].limit) index = (index + 1) % 12;
+            return zodiacs[index];
+        }
+
+        function getDaysUntilBirthday(day, month) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            let nextBday = new Date(now.getFullYear(), month - 1, day);
+            if (today > nextBday) {
+                nextBday.setFullYear(now.getFullYear() + 1);
+            }
+            
+            const diffMs = nextBday - today;
+            return Math.round(diffMs / (1000 * 60 * 60 * 24));
+        }
+
+        let globalShareText = "";
+
+        function revealMagic() {
+            const inputVal = dobText.value.trim() || dobPicker.value;
+            const parsed = parseDOB(inputVal);
+
+            if (!parsed) {
+                alert("कृपया सही जन्म तिथि दर्ज करें!\nउदाहरण: 15/08/1998 या YYYY-MM-DD");
+                return;
+            }
+
+            const { day, month, year } = parsed;
+            const rawString = `${day}${month}${year}`;
+
+            let sum = 0;
+            for (let char of rawString) {
+                sum += parseInt(char, 10);
+            }
+
+            const selectedMeaning = magicMeanings[sum % magicMeanings.length];
+            const zodiac = getZodiac(day, month);
+            const daysLeft = getDaysUntilBirthday(day, month);
+
+            const resultBox = document.getElementById('result-box');
+            document.getElementById('result-title').innerHTML = selectedMeaning.title;
+            document.getElementById('result-desc').innerHTML = selectedMeaning.desc;
+            
+            const daysText = daysLeft === 0 
+                ? "🎉 आज आपका जन्मदिन है! हैप्पी बर्थडे!" 
+                : `${daysLeft} दिन`;
+
+            document.getElementById('extra-details').innerHTML = `
+                ✨ <b>राशि (Zodiac):</b> ${zodiac.name}<br>
+                🎨 <b>लकी कलर:</b> ${zodiac.color}<br>
+                🔢 <b>लकी नंबर:</b> ${zodiac.number}<br>
+                ⏳ <b>अगले जन्मदिन में बाकी:</b> ${daysText}
+            `;
+
+            resultBox.style.display = "block";
+
+            globalShareText = `मेरे बर्थडे का जादुई मतलब: *${selectedMeaning.title}*\nराशि: ${zodiac.name} | लकी नंबर: ${zodiac.number}\n${daysLeft === 0 ? "आज मेरा जन्मदिन है! 🎉" : "अगले जन्मदिन में बाकी हैं " + daysLeft + " दिन!"}`;
+
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function shareOnWhatsApp() {
+            const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(globalShareText + "\n\nआप भी अपना बर्थडे मैजिक यहाँ चेक करें: " + window.location.href)}`;
+            window.open(shareUrl, '_blank');
+        }
+
+        // ---------------- गेम लॉजिक ----------------
+        let isFlipped = false;
+
+        function playLuckyGame() {
+            const card = document.getElementById('magic-card');
+            const numDisplay = document.getElementById('lucky-num-display');
+            const predText = document.getElementById('game-prediction');
+
+            if (isFlipped) {
+                card.classList.remove('flipped');
+                isFlipped = false;
+                predText.innerHTML = "अपने मन में 1-9 के बीच फिर से कोई नंबर सोचें...";
+                return;
+            }
+
+            // 1 से 9 के बीच यादृच्छिक लकी नंबर
+            const luckyNum = Math.floor(Math.random() * 9) + 1;
+            numDisplay.textContent = luckyNum;
+
+            card.classList.add('flipped');
+            isFlipped = true;
+
+            predText.innerHTML = "🔮 <i>जादुई कार्ड आपकी ऊर्जा पहचान रहा है...</i>";
+
+            setTimeout(() => {
+                predText.innerHTML = `✨ <b>लकी नंबर ${luckyNum}:</b> ${luckyGameData[luckyNum]}`;
+                confetti({
+                    particleCount: 50,
+                    spread: 50,
+                    origin: { y: 0.8 }
+                });
+            }, 800);
+        }
+    </script>
+</body>
+</html>
